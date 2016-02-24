@@ -46,7 +46,7 @@ func (result goSearchResult) PackagePath() string {
 }
 
 func (result goSearchResult) Info() string {
-	return result.Description
+	return result.Synopsis
 }
 
 func main() {
