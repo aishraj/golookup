@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
 )
 
 type searchResult interface {
@@ -28,19 +29,19 @@ type goSearchResult struct {
 	ProjectURL  string `json:"projecturl"`
 }
 
-func (result *goDocResult) PackagePath() string {
+func (result goDocResult) PackagePath() string {
 	return result.Path
 }
 
-func (result *goDocResult) Info() string {
+func (result goDocResult) Info() string {
 	return result.Synopsis
 }
 
-func (result *goSearchResult) PackagePath() string {
+func (result goSearchResult) PackagePath() string {
 	return result.ProjectURL
 }
 
-func (result *goSearchResult) Info() string {
+func (result goSearchResult) Info() string {
 	return result.Description
 }
 
@@ -53,19 +54,22 @@ func search(searchTerm string) {
 }
 
 func findResults(term string, ch chan<- searchResult) {
-	dummyResult := &goDocResult{"github.com/aishraj/gohort", "A silly library"}
+	dummyResult := goDocResult{"github.com/aishraj/gohort", "A silly library"}
 	ch <- dummyResult
 	close(ch)
 }
 
-// func main() {
-// 	search("silly")
-// }
+type resultSet struct {
+	Results map[string]bool
+	sync.RWMutex
+}
 
 func main() {
 	results := make(chan searchResult)
 	ech := make(chan error)
-	go searchGoDoc("rss", results, ech)
+	done := make(chan bool)
+	go searchGoDoc("rss", results, ech, done)
+
 	for {
 		select {
 		case err := <-ech:
@@ -73,17 +77,13 @@ func main() {
 			return
 		case result := <-results:
 			log.Println(result)
+		case <-done:
+			log.Println("Done")
+			return
 		}
-		if ech == nil && results == nil {
-			break
-		}
-	}
-	if err := <-ech; err != nil {
-		log.Fatal("Encountered Error.", err)
-		return
-	}
-	for result := range results {
-		log.Println("inside here")
-		fmt.Println(result)
 	}
 }
+
+// func main() {
+//
+// }
