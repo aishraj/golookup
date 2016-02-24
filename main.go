@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"sync"
 )
 
@@ -18,6 +17,11 @@ type goDocResult struct {
 
 type goDocResponse struct {
 	Results []goDocResult `json:"results"`
+}
+
+type goSearchResponse struct {
+	Query string           `json:"query"`
+	Hits  []goSearchResult `json:"hits"`
 }
 
 type goSearchResult struct {
@@ -45,45 +49,23 @@ func (result goSearchResult) Info() string {
 	return result.Description
 }
 
-func search(searchTerm string) {
-	results := make(chan searchResult)
-	go findResults(searchTerm, results)
-	for result := range results {
-		fmt.Printf("%v : %v\n", result.PackagePath(), result.Info())
-	}
-}
-
-func findResults(term string, ch chan<- searchResult) {
-	dummyResult := goDocResult{"github.com/aishraj/gohort", "A silly library"}
-	ch <- dummyResult
-	close(ch)
-}
-
-type resultSet struct {
-	Results map[string]bool
-	sync.RWMutex
-}
-
 func main() {
 	results := make(chan searchResult)
 	ech := make(chan error)
-	done := make(chan bool)
-	go searchGoDoc("rss", results, ech, done)
-
-	for {
-		select {
-		case err := <-ech:
-			log.Fatal("Encountered error", err)
-			return
-		case result := <-results:
-			log.Println(result)
-		case <-done:
-			log.Println("Done")
-			return
+	resultsMap := make(map[string]bool)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go searchGoDoc("rss", results, ech, &wg)
+	go searchGoSearch("rss", results, ech, &wg)
+	go func() {
+		wg.Wait()
+		close(results)
+		close(ech)
+	}()
+	for values := range results {
+		if _, ok := resultsMap[values.PackagePath()]; !ok {
+			resultsMap[values.PackagePath()] = true
+			fmt.Printf("%v\n%v\n\n", values.PackagePath(), values.Info())
 		}
 	}
 }
-
-// func main() {
-//
-// }
