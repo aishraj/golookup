@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"log"
+)
+
 type searchResult interface {
 	PackagePath() string
 	Info() string
@@ -42,4 +47,14 @@ func (result goSearchResult) PackagePath() string {
 
 func (result goSearchResult) Info() string {
 	return result.Synopsis
+}
+
+func main() {
+	results, err := search("rss")
+	if err != nil {
+		log.Panic("Encountered error. ", err)
+	}
+	for _, result := range results {
+		fmt.Println(result)
+	}
 }

@@ -2,11 +2,15 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"sync"
+)
+
+const (
+	goDocSearchURI = "http://api.godoc.org/search?"
+	goSearchURI    = "http://go-search.org/api?"
 )
 
 func searchGoDoc(term string, ch chan<- searchResult, ech chan<- error, wg *sync.WaitGroup) {
@@ -14,7 +18,7 @@ func searchGoDoc(term string, ch chan<- searchResult, ech chan<- error, wg *sync
 	uriValues := url.Values{}
 	uriValues.Set("q", term)
 	parameters := uriValues.Encode()
-	urlString := "http://api.godoc.org/search?" + parameters
+	urlString := goDocSearchURI + parameters
 	resp, err := http.Get(urlString)
 	if err != nil {
 		log.Println("Encountered an error wihle trying to do an HTTP GET", err)
@@ -41,7 +45,7 @@ func searchGoSearch(term string, ch chan<- searchResult, ech chan<- error, wg *s
 	uriValues.Set("action", "search")
 	uriValues.Set("q", term)
 	params := uriValues.Encode()
-	urlString := "http://go-search.org/api?" + params
+	urlString := goSearchURI + params
 	resp, err := http.Get(urlString)
 	if err != nil {
 		log.Printf("Encountered an error wihle trying to do an HTTP GET %v \n", err)
@@ -90,15 +94,5 @@ func search(query string) ([]searchResult, error) {
 		case err := <-ech:
 			return nil, err
 		}
-	}
-}
-
-func main() {
-	results, err := search("rss")
-	if err != nil {
-		log.Panic("Encountered error. ", err)
-	}
-	for _, result := range results {
-		fmt.Println(result)
 	}
 }
