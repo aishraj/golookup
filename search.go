@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
+	"time"
 )
 
 const (
@@ -19,7 +20,9 @@ func searchGoDoc(term string, ch chan<- searchResult, ech chan<- error, wg *sync
 	uriValues.Set("q", term)
 	parameters := uriValues.Encode()
 	urlString := goDocSearchURI + parameters
-	resp, err := http.Get(urlString)
+	timeout := time.Duration(1 * time.Minute)
+	client := http.Client{Timeout: timeout}
+	resp, err := client.Get(urlString)
 	if err != nil {
 		log.Println("Encountered an error wihle trying to do an HTTP GET", err)
 		ech <- err
@@ -46,9 +49,11 @@ func searchGoSearch(term string, ch chan<- searchResult, ech chan<- error, wg *s
 	uriValues.Set("q", term)
 	params := uriValues.Encode()
 	urlString := goSearchURI + params
-	resp, err := http.Get(urlString)
+	timeout := time.Duration(1 * time.Minute)
+	client := http.Client{Timeout: timeout}
+	resp, err := client.Get(urlString)
 	if err != nil {
-		log.Printf("Encountered an error wihle trying to do an HTTP GET %v \n", err)
+		log.Printf("Encountered an error while trying to do an HTTP GET %v \n", err)
 		ech <- err
 		return
 	}
@@ -78,13 +83,17 @@ func search(query string) ([]searchResult, error) {
 	go searchGoSearch(query, results, ech, &wg)
 	go func() {
 		wg.Wait()
+		done <- true
 		close(results)
 		close(ech)
-		done <- true
 	}()
 	for {
 		select {
 		case values := <-results:
+			if values == nil {
+				log.Println("Recieved a nil info for", values)
+				break
+			}
 			if _, ok := resultsMap[values.PackagePath()]; !ok {
 				resultsMap[values.PackagePath()] = true
 				searchResults = append(searchResults, values)
