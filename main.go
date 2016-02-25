@@ -1,10 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"sync"
-)
-
 type searchResult interface {
 	PackagePath() string
 	Info() string
@@ -47,25 +42,4 @@ func (result goSearchResult) PackagePath() string {
 
 func (result goSearchResult) Info() string {
 	return result.Synopsis
-}
-
-func main() {
-	results := make(chan searchResult)
-	ech := make(chan error)
-	resultsMap := make(map[string]bool)
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go searchGoDoc("rss", results, ech, &wg)
-	go searchGoSearch("rss", results, ech, &wg)
-	go func() {
-		wg.Wait()
-		close(results)
-		close(ech)
-	}()
-	for values := range results {
-		if _, ok := resultsMap[values.PackagePath()]; !ok {
-			resultsMap[values.PackagePath()] = true
-			fmt.Printf("%v\n%v\n\n", values.PackagePath(), values.Info())
-		}
-	}
 }
