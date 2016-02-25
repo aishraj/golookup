@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
+	"os"
 )
 
 type searchResult interface {
@@ -57,8 +59,20 @@ func (result goDocResult) String() string {
 	return fmt.Sprintf("%v\n%v\n\n", result.PackagePath(), result.Info())
 }
 
+func usage() {
+	fmt.Fprintf(os.Stderr, "usage: gofind [search term]\n")
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
 func main() {
-	results, err := search("rss")
+	flag.Usage = usage
+	if len(os.Args) != 2 {
+		flag.Usage()
+		return
+	}
+	searchTerm := os.Args[1]
+	results, err := search(searchTerm)
 	if err != nil {
 		log.Panic("Encountered error. ", err)
 	}
