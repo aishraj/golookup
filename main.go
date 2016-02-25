@@ -49,10 +49,21 @@ func (result goSearchResult) Info() string {
 	return result.Synopsis
 }
 
+func (result goSearchResult) String() string {
+	return fmt.Sprintf("%v\n%v\n\n", result.PackagePath(), result.Info())
+}
+
+func (result goDocResult) String() string {
+	return fmt.Sprintf("%v\n%v\n\n", result.PackagePath(), result.Info())
+}
+
 func main() {
 	results, err := search("rss")
 	if err != nil {
 		log.Panic("Encountered error. ", err)
+	}
+	if len(results) == 0 {
+		fmt.Println("Did not get any results for the given query.")
 	}
 	for _, result := range results {
 		fmt.Println(result)
