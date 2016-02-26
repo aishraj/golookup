@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/aishraj/golookup/cmd"
 	"log"
 	"os"
 )
@@ -65,7 +66,7 @@ func usage() {
 	os.Exit(2)
 }
 
-func main() {
+func runOther() {
 	flag.Usage = usage
 	if len(os.Args) != 2 {
 		flag.Usage()
@@ -81,5 +82,12 @@ func main() {
 	}
 	for _, result := range results {
 		fmt.Println(result)
+	}
+}
+
+func main() {
+	if err := cmd.RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
 	}
 }
