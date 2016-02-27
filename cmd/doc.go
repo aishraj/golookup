@@ -16,37 +16,32 @@ package cmd
 
 import (
 	"fmt"
-
+	"github.com/aishraj/golookup/doc"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // docCmd represents the doc command
 var docCmd = &cobra.Command{
 	Use:   "doc",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Doc allows viewing the godoc of a Go package without having it locally set up.",
+	Long: `Doc allows viewing the godoc of a Go package without having it locally set up.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+It is an HTTP client to godoc.org and uses the response available from godoc.org to display the godoc.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("doc called")
+		if len(args) != 1 {
+			fmt.Println("usage: ", RootCmd.Usage())
+			return
+		}
+		d, err := doc.FetchDoc(args[0])
+		if err != nil {
+			fmt.Println("Unable to perform search. Error is: ", err)
+			os.Exit(1)
+		}
+		fmt.Println(d)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(docCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// docCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// docCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }

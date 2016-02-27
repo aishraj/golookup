@@ -16,37 +16,37 @@ package cmd
 
 import (
 	"fmt"
-
+	"github.com/aishraj/golookup/search"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // searchCmd represents the search command
 var searchCmd = &cobra.Command{
 	Use:   "search",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Searches for the given query across mutiple search providers",
+	Long: `Search performs search for the given query throughout mutiple search providers.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+It returns back a list of package names followed by pacakge description.
+The maximum default number of packages returned is 20.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("search called")
+		if len(args) != 1 {
+			fmt.Println("usage: ", RootCmd.Usage())
+			return
+		}
+		results, err := search.Search(args[0])
+		if err != nil {
+			fmt.Println("Unable to perform search. Error is: ", err)
+			os.Exit(1)
+		}
+		for _, result := range results {
+			fmt.Println(result)
+		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(searchCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// searchCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// searchCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	searchCmd.Flags().IntP("maxResults", "m", 20, "Maximum number of search results returned")
 
 }
