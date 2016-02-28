@@ -11,7 +11,7 @@ const (
 	docBaseURL = "https://godoc.org/"
 )
 
-//FetchDoc fetches the documenation of a given package string from godoc.org.
+//FetchDoc fetches the documentation of a given package string from godoc.org.
 func FetchDoc(pkgname string) (string, error) {
 	timeout := time.Duration(1 * time.Minute)
 	client := http.Client{Timeout: timeout}

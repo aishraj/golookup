@@ -5,13 +5,13 @@ import (
 	"sync"
 )
 
-//Result represents the high level interface which every result from differnt providers adhere to.
+//Result represents the high level interface which every result from different providers adhere to.
 type Result interface {
 	PackagePath() string
 	Info() string
 }
 
-//Search retuns a slice of Result and an error if any one of the search providers failed or timed out.
+//Search returns a slice of Result and an error if any one of the search providers failed or timed out.
 func Search(query string, maxCount int) ([]Result, error) {
 	results := make(chan Result)
 	ech := make(chan error)
