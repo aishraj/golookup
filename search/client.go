@@ -16,12 +16,13 @@ func Search(query string, maxCount int) ([]Result, error) {
 	results := make(chan Result)
 	ech := make(chan error)
 	done := make(chan bool)
+	terminate := make(chan bool, 1)
 	resultsMap := make(map[string]bool)
 	var wg sync.WaitGroup
 	wg.Add(2)
 	var resultItems []Result
-	go searchGoDoc(query, results, ech, &wg)
-	go searchGoSearch(query, results, ech, &wg)
+	go searchGoDoc(query, results, terminate, ech, &wg)
+	go searchGoSearch(query, results, terminate, ech, &wg)
 	go func() {
 		wg.Wait()
 		done <- true
@@ -39,6 +40,11 @@ func Search(query string, maxCount int) ([]Result, error) {
 				if len(values.Info()) > 3 { //Not considering packages with description that are not realistic
 					resultsMap[values.PackagePath()] = true
 					resultItems = append(resultItems, values)
+					if len(resultItems) > maxCount {
+						terminate <- true
+						terminate <- true
+						return resultItems, nil
+					}
 				}
 			}
 		case <-done:

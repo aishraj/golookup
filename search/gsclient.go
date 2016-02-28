@@ -44,7 +44,7 @@ const (
 	goSearchURI = "http://go-search.org/api?"
 )
 
-func searchGoSearch(term string, ch chan<- Result, ech chan<- error, wg *sync.WaitGroup) {
+func searchGoSearch(term string, ch chan<- Result, abort <-chan bool, ech chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	uriValues := url.Values{}
 	uriValues.Set("action", "search")
@@ -69,6 +69,11 @@ func searchGoSearch(term string, ch chan<- Result, ech chan<- error, wg *sync.Wa
 		return
 	}
 	for _, item := range responseBody.Hits {
-		ch <- item
+		select {
+		case <-abort:
+			return
+		case ch <- item:
+			//nothing here
+		}
 	}
 }

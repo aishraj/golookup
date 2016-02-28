@@ -31,7 +31,7 @@ func (result goDocResult) String() string {
 	return fmt.Sprintf("%v\n%v\n\n", result.PackagePath(), result.Info())
 }
 
-func searchGoDoc(term string, ch chan<- Result, ech chan<- error, wg *sync.WaitGroup) {
+func searchGoDoc(term string, ch chan<- Result, abort <-chan bool, ech chan<- error, wg *sync.WaitGroup) {
 	defer wg.Done()
 	uriValues := url.Values{}
 	uriValues.Set("q", term)
@@ -55,6 +55,11 @@ func searchGoDoc(term string, ch chan<- Result, ech chan<- error, wg *sync.WaitG
 		return
 	}
 	for _, item := range responseData.Results {
-		ch <- item
+		select {
+		case <-abort:
+			return
+		case ch <- item:
+			//nothing here
+		}
 	}
 }
