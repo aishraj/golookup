@@ -15,7 +15,7 @@ const (
 )
 
 type goSearchResponse struct {
-	Query string           `json:"query"`
+	Query string     `json:"query"`
 	Hits  []goResult `json:"hits"`
 }
 
@@ -29,7 +29,7 @@ type goResult struct {
 }
 
 func (result goResult) PackagePath() string {
-	return result.ProjectURL
+	return result.Package
 }
 
 func (result goResult) Info() string {

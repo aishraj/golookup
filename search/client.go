@@ -12,14 +12,14 @@ type Result interface {
 }
 
 //Search retuns a slice of Result and an error if any one of the search providers failed or timed out.
-func Search(query string) ([]Result, error) {
+func Search(query string, maxCount int) ([]Result, error) {
 	results := make(chan Result)
 	ech := make(chan error)
 	done := make(chan bool)
 	resultsMap := make(map[string]bool)
 	var wg sync.WaitGroup
 	wg.Add(2)
-	var Results []Result
+	var resultItems []Result
 	go searchGoDoc(query, results, ech, &wg)
 	go searchGoSearch(query, results, ech, &wg)
 	go func() {
@@ -36,11 +36,13 @@ func Search(query string) ([]Result, error) {
 				break
 			}
 			if _, ok := resultsMap[values.PackagePath()]; !ok {
-				resultsMap[values.PackagePath()] = true
-				Results = append(Results, values)
+				if len(values.Info()) > 3 { //Not considering packages with description that are not realistic
+					resultsMap[values.PackagePath()] = true
+					resultItems = append(resultItems, values)
+				}
 			}
 		case <-done:
-			return Results, nil
+			return resultItems, nil
 		case err := <-ech:
 			return nil, err
 		}
